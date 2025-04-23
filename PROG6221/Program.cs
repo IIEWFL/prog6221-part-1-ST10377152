@@ -10,7 +10,8 @@ namespace PROG6221
 {
     class Program
     {
-        static Dictionary<string, Dictionary<string, string>> responses = new Dictionary<string, Dictionary<string, string>>()
+        // Cybersecurity topic responses with subtopics
+        static Dictionary<string, Dictionary<string, string>> topicResponses = new Dictionary<string, Dictionary<string, string>>()
         {
             {
                 "password", new Dictionary<string, string>()
@@ -38,18 +39,19 @@ namespace PROG6221
             }
         };
 
+        // General conversation responses
+        static Dictionary<string, string> generalResponses = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "how are you", "I'm a bot, so I don't feel emotions, but I'm here to help! 🛡️" },
+            { "purpose", "I teach cybersecurity basics like password safety, phishing identification, and safe browsing practices." },
+            { "what can i ask", "You can ask me about:\n- Password security\n- Phishing detection\n- Safe browsing\nOr type 'exit' to quit" }
+        };
+
         static void Main()
         {
-            // Play voice greeting
             PlayWelcomeSound();
-
-            // Display ASCII art
             DisplayLogo();
-
-            // Get user name
             string userName = GetUserName();
-
-            // Main chat loop
             RunChatLoop(userName);
         }
 
@@ -62,14 +64,17 @@ namespace PROG6221
             }
             catch (FileNotFoundException)
             {
-                Console.WriteLine("[Audio file missing]");
+                Console.WriteLine("[Audio greeting not found]");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Audio error: {ex.Message}]");
             }
         }
 
         static void DisplayLogo()
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
-
             try
             {
                 string[] logoLines = File.ReadAllLines("logo.txt");
@@ -80,7 +85,6 @@ namespace PROG6221
             {
                 Console.WriteLine("=== CYBERSECURITY AWARENESS BOT ===");
             }
-
             Console.ResetColor();
             Console.WriteLine("\n");
         }
@@ -88,12 +92,14 @@ namespace PROG6221
         static string GetUserName()
         {
             Console.Write("Enter your name: ");
-            string name = Console.ReadLine();
+            string name = Console.ReadLine().Trim();
 
             while (string.IsNullOrWhiteSpace(name))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Invalid name. Please try again:");
-                name = Console.ReadLine();
+                Console.ResetColor();
+                name = Console.ReadLine().Trim();
             }
 
             return name;
@@ -101,57 +107,84 @@ namespace PROG6221
 
         static void RunChatLoop(string userName)
         {
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine($"Welcome {userName}! Ask about:");
-            Console.WriteLine("- Passwords\n- Phishing\n- Browsing\n(Type 'exit' to quit)");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"Welcome {userName}! I'm your Cybersecurity Assistant.(Type exit to leave)");
             Console.ResetColor();
 
             while (true)
             {
+                Console.ForegroundColor = ConsoleColor.White;
                 Console.Write("\nYou: ");
-                string input = Console.ReadLine().ToLower().Trim();
+                Console.ResetColor();
+
+                string input = Console.ReadLine().Trim().ToLower();
 
                 if (input == "exit")
                 {
-                    Console.WriteLine("Goodbye! Stay secure!");
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    Console.WriteLine("Goodbye! Remember to stay vigilant online!");
+                    Console.ResetColor();
                     break;
                 }
 
-                HandleTopicSelection(input);
+                ProcessInput(input);
             }
         }
 
-        static void HandleTopicSelection(string input)
+        static void ProcessInput(string input)
         {
-            if (responses.ContainsKey(input))
+            if (generalResponses.TryGetValue(input, out string generalResponse))
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($"\nBot: Which {input} topic?");
-                Console.WriteLine("Options: " + string.Join(", ", responses[input].Keys));
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"\nBot: {generalResponse}");
                 Console.ResetColor();
+                return;
+            }
 
-                Console.Write("\nYou: ");
-                string subTopic = Console.ReadLine().ToLower().Trim();
+            if (topicResponses.ContainsKey(input))
+            {
+                HandleSubtopicSelection(input);
+                return;
+            }
 
-                if (responses[input].TryGetValue(subTopic, out string response))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"\nBot: {response}");
-                    Console.ResetColor();
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"\nBot: Invalid {input} subtopic. Try again.");
-                    Console.ResetColor();
-                }
+            ShowErrorMessage();
+        }
+
+        static void HandleSubtopicSelection(string mainTopic)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"\nBot: Which {mainTopic} topic?");
+            Console.WriteLine($"Options: {string.Join(", ", topicResponses[mainTopic].Keys)}");
+            Console.ResetColor();
+
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write("\nYou: ");
+            Console.ResetColor();
+
+            string subTopic = Console.ReadLine().Trim().ToLower();
+
+            if (topicResponses[mainTopic].TryGetValue(subTopic, out string response))
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"\nBot: {response}");
+                Console.ResetColor();
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("\nBot: Main topics are: passwords, phishing, browsing");
+                Console.WriteLine($"\nBot: Invalid {mainTopic} subtopic. Try: {string.Join(", ", topicResponses[mainTopic].Keys)}");
                 Console.ResetColor();
             }
+        }
+
+        static void ShowErrorMessage()
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\nBot: I didn't understand that. Try these commands:");
+            Console.WriteLine("- General questions: how are you, purpose, what can i ask");
+            Console.WriteLine("- Main topics: password, phishing, browsing");
+            Console.WriteLine("- Type 'exit' to quit");
+            Console.ResetColor();
         }
     }
 }
