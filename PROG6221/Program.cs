@@ -169,6 +169,7 @@ namespace PROG6221
                 Console.WriteLine($"\nBot: {response}");
                 Console.ResetColor();
             }
+
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
